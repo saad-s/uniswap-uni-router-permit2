@@ -1,0 +1,21 @@
+{
+  "name": "universal-router",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "fix:format": "prettier --config .prettierrc.cjs \"src/**/*.{ts,tsx,js,jsx,json}\" --write"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@uniswap/permit2-sdk": "^1.2.0",
+    "@uniswap/sdk-core": "^3.2.6",
+    "@uniswap/smart-order-router": "^3.12.6",
+    "dotenv": "^16.1.4",
+    "ethers": "^5.6.6",
+    "prettier": "^2.8.8"
+  }
+}
