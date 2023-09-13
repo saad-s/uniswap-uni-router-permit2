@@ -35,6 +35,7 @@ async function getAllowanceAmount(erc20TokenAddress, spender) {
   const erc20 = new ethers.Contract(erc20TokenAddress, erc20Abi, ethersSigner);
   const allowance = await erc20.allowance(walletAddress, spender);
   console.log('allowance:', allowance.toString());
+  return allowance
 }
 
 async function getSwapRoute(sourceToken, destToken, amount, permit, signature) {
