@@ -27,20 +27,28 @@ async function approvePermit2Contract(erc20Address, amount) {
   const approveTx = await erc20.approve(PERMIT2_ADDRESS, amount);
   console.log('approve tx hash:', approveTx.hash);
   // wait for approve transaction confirmation
-  const status = await approveTx.wait();
-  // console.log('approve tx status', status);
+  const receipt = await approveTx.wait();
+  if (receipt.status === 1) console.log('approve transaction confirmed');
+  else throw new Error(receipt);
 }
 
 async function getAllowanceAmount(erc20TokenAddress, spender) {
   const erc20 = new ethers.Contract(erc20TokenAddress, erc20Abi, ethersSigner);
   const allowance = await erc20.allowance(walletAddress, spender);
-  console.log('allowance:', allowance.toString());
-  return allowance
+  return allowance;
 }
 
-async function getSwapRoute(sourceToken, destToken, amount, permit, signature) {
-  const wei = ethers.utils.parseUnits(amount.toString(), sourceToken.decimals);
-  const inputAmount = CurrencyAmount.fromRawAmount(sourceToken, wei.toString());
+async function getSwapRoute(
+  sourceToken,
+  destToken,
+  amountInWei,
+  permit,
+  signature
+) {
+  const inputAmount = CurrencyAmount.fromRawAmount(
+    sourceToken,
+    amountInWei.toString()
+  );
 
   const router = new AlphaRouter({ chainId, provider: ethersProvider });
   const route = await router.route(
@@ -73,7 +81,7 @@ async function getSwapRoute(sourceToken, destToken, amount, permit, signature) {
       }
     }
   );
-  console.log(`Quote Exact In: ${route.quote.toFixed(10)}`);
+  console.log(`Quote Exact In: ${amountInWei}  -> ${route.quote.toExact()}`);
   return route;
 }
 
@@ -97,11 +105,13 @@ async function executeSwap() {
     sourceToken.address,
     PERMIT2_ADDRESS
   );
-  if (allowance === 0 || allowance < amount) {
+  console.log('current allowance:', allowance.toString());
+  if (allowance.eq(0) || allowance.lt(amountInWei)) {
     // approve permit2 contract for source token
     // NOTE: amount is set to max here
     // NOTE: this will send out approve tx
     // and wait for confirmation
+    console.log('sending approve tx to add more allowance');
     await approvePermit2Contract(
       sourceToken.address,
       ethers.constants.MaxInt256
@@ -161,6 +171,8 @@ async function executeSwap() {
     chainId
   );
 
+  // console.log(JSON.stringify({ domain, types, values }));
+
   // create signature for permit
   const signature = await ethersSigner._signTypedData(domain, types, values);
   console.log('signature: ', signature);
@@ -170,7 +182,7 @@ async function executeSwap() {
   // console.log('split signature:', splitSignature);
 
   // NOTE: optionally verify the signature
-  const address = await ethers.utils.verifyTypedData(
+  const address = ethers.utils.verifyTypedData(
     domain,
     types,
     values,
@@ -178,13 +190,14 @@ async function executeSwap() {
   );
 
   if (address !== walletAddress)
-    throw new error('signature verification failed');
+    throw new Error('signature verification failed');
+  else console.log(`signature verified, signed by: ${address}`);
 
   // get swap route for tokens
   const route = await getSwapRoute(
     sourceToken,
     destToken,
-    amount,
+    amountInWei,
     permit,
     signature
   );
