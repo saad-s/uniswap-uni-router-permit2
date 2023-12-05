@@ -55,7 +55,7 @@ export const USDT = new Token(
 export const DAI = new Token(
   chainId,
   chainId === ChainId.MAINNET
-    ? ''
+    ? '0x6B175474E89094C44Da98b954EedeAC495271d0F'
     : '0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844', // goerli
   18,
   'DAI',
